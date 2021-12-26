@@ -8,11 +8,14 @@ Use go-github sdk in go.
 
 ## Installation
 
+clone the repo
 ```
 git clone git@github.com:siansiansu/go-github.git
 ```
 
+Simpily run `main.go`.
 ```
+go mod tidy
 go run .
 ```
 
