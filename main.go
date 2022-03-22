@@ -6,26 +6,18 @@ import (
 	"io/ioutil"
 
 	"github.com/google/go-github/github"
-	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 )
 
 const (
 	owner       = "siansiansu"
-	repo        = "siansiansu"
+	repo        = "nvim"
 	contentPath = "README.md"
 	branch      = "main"
+	token       = ""
 )
 
 func main() {
-	viper.SetConfigType("yaml")
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("Failed to read config file: %w \n", err))
-	}
-	token := viper.GetString("github_token")
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
@@ -35,26 +27,41 @@ func main() {
 
 	c := github.NewClient(tc)
 
-	// Print Octocat
-	fmt.Println(c.Octocat(ctx, "hello world!"))
-
-	_, _, err = c.Repositories.List(ctx, "", nil)
+	oct, _, err := c.Octocat(ctx, "hello world!")
 	if err != nil {
-		panic(fmt.Errorf("Failed to list repositories"))
+		fmt.Println(err)
 	}
 
-	// Get File From Github repositories
+	fmt.Println(oct)
+
+	_, tree, _, err := c.Repositories.GetContents(ctx, owner, repo, ".", &github.RepositoryContentGetOptions{
+		Ref: "main",
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	for i := range tree {
+		if tree[i].GetType() == "file" {
+			fmt.Println(tree[i].GetName())
+		}
+	}
+
+	// // Get File From Github repositories
 	readCloser, err := c.Repositories.DownloadContents(ctx, owner, repo, contentPath, &github.RepositoryContentGetOptions{
 		Ref: branch,
 	})
+
 	defer readCloser.Close()
 
 	if err != nil {
-		panic(fmt.Errorf("Failed to get file"))
+		panic(err)
 	}
+
 	content, err := ioutil.ReadAll(readCloser)
 	if err != nil {
-		panic(fmt.Errorf("Failed to read file"))
+		panic(err)
 	}
 	fmt.Println(string(content))
 }
